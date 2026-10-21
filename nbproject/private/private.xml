@@ -3,9 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Administrator/OneDrive%20-%20Richfield%20Graduate%20Institute%20of%20Technology/Documents/NetBeansProjects/HealthFirstPIMS/src/healthfirstpims/database/DatabaseConnection.java</file>
             <file>file:/C:/Users/Administrator/OneDrive%20-%20Richfield%20Graduate%20Institute%20of%20Technology/Documents/NetBeansProjects/HealthFirstPIMS/src/healthfirstpims/database/DatabaseTest.java</file>
-            <file>file:/C:/Users/Administrator/OneDrive%20-%20Richfield%20Graduate%20Institute%20of%20Technology/Documents/NetBeansProjects/HealthFirstPIMS/src/healthfirstpims/Main.java</file>
+            <file>file:/C:/Users/Administrator/OneDrive%20-%20Richfield%20Graduate%20Institute%20of%20Technology/Documents/NetBeansProjects/HealthFirstPIMS/src/healthfirstpims/gui/Login.java</file>
+            <file>file:/C:/Users/Administrator/OneDrive%20-%20Richfield%20Graduate%20Institute%20of%20Technology/Documents/NetBeansProjects/HealthFirstPIMS/src/healthfirstpims/gui/AdminDashboard.java</file>
+            <file>file:/C:/Users/Administrator/OneDrive%20-%20Richfield%20Graduate%20Institute%20of%20Technology/Documents/NetBeansProjects/HealthFirstPIMS/src/healthfirstpims/gui/CashierDashboard.java</file>
+            <file>file:/C:/Users/Administrator/OneDrive%20-%20Richfield%20Graduate%20Institute%20of%20Technology/Documents/NetBeansProjects/HealthFirstPIMS/src/healthfirstpims/HealthFirstPIMS.java</file>
         </group>
     </open-files>
 </project-private>

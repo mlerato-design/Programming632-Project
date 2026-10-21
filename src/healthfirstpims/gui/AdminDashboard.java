@@ -4,6 +4,8 @@
  */
 package healthfirstpims.gui;
 
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author Administrator
@@ -58,13 +60,12 @@ public class AdminDashboard extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(218, 218, 218)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jButton5)
                     .addComponent(jLabel1)
                     .addComponent(jButton4)
                     .addComponent(jButton3)
                     .addComponent(jButton1)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jButton5)
-                        .addComponent(jButton2)))
+                    .addComponent(jButton2))
                 .addContainerGap(256, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -93,7 +94,21 @@ public class AdminDashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        // TODO add your handling code here:
+           int choice = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to logout?",
+            "Logout",
+            JOptionPane.YES_NO_OPTION
+    );
+
+    if (choice == JOptionPane.YES_OPTION) {
+
+        Login login = new Login();
+        login.setVisible(true);
+
+        this.dispose();
+    }
+
     }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
