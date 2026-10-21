@@ -40,6 +40,7 @@ public class CashierDashboard extends javax.swing.JFrame {
         jLabel1.setText("Cashier Dashboard");
 
         jButton1.setText("Point of Sale");
+        jButton1.addActionListener(this::jButton1ActionPerformed);
 
         jButton2.setText("Stock Check");
 
@@ -92,6 +93,10 @@ public class CashierDashboard extends javax.swing.JFrame {
         this.dispose();
     }
     }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        new CashierPOS().setVisible(true);
+    }//GEN-LAST:event_jButton1ActionPerformed
                        
 
     /**
