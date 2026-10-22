@@ -11,15 +11,20 @@ import javax.swing.JOptionPane;
  * @author Administrator
  */
 public class CashierDashboard extends javax.swing.JFrame {
-    
+    private final int cashierUserId;
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CashierDashboard.class.getName());
 
     /**
      * Creates new form CashierDashboard
      */
-    public CashierDashboard() {
-        initComponents();
-    }
+   public CashierDashboard() {
+    this(0);
+}
+
+public CashierDashboard(int cashierUserId) {
+    this.cashierUserId = cashierUserId;
+    initComponents();
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -95,7 +100,7 @@ public class CashierDashboard extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        new CashierPOS().setVisible(true);
+        new CashierPOS(cashierUserId).setVisible(true);
     }//GEN-LAST:event_jButton1ActionPerformed
                        
 

@@ -16,7 +16,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CashierPOS extends JFrame {
-
+    
+    
+    
     private JTextField txtSearch;
     private JTextField txtQuantity;
     private JLabel lblTotal;
@@ -24,22 +26,265 @@ public class CashierPOS extends JFrame {
     private JTable tblMedicines;
     private JTable tblCart;
 
+    private final int cashierUserId;
+    
     private DefaultTableModel medicineModel;
     private DefaultTableModel cartModel;
 
     private TableRowSorter<DefaultTableModel> medicineSorter;
 
+    private void checkout() {
+    if (cashierUserId <= 0) {
+        JOptionPane.showMessageDialog(
+            this,
+            "No authenticated cashier ID was supplied. "
+                + "Please open POS through the logged-in cashier account."
+        );
+        return;
+    }
+
+    if (cart.isEmpty()) {
+        JOptionPane.showMessageDialog(
+            this, "Your cart is empty."
+        );
+        return;
+    }
+
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Complete this sale and update stock?",
+        "Confirm Checkout",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm != JOptionPane.YES_OPTION) {
+        return;
+    }
+
+    String insertSale =
+        "INSERT INTO sales (total_amount, user_id) VALUES (?, ?)";
+
+    String lockMedicine =
+        "SELECT name, price, quantity_in_stock, expiry_date "
+        + "FROM medicines WHERE medicine_id = ? FOR UPDATE";
+
+    String insertItem =
+        "INSERT INTO sale_items "
+        + "(sale_id, medicine_id, quantity_sold, price_at_sale) "
+        + "VALUES (?, ?, ?, ?)";
+
+    String updateStock =
+        "UPDATE medicines "
+        + "SET quantity_in_stock = quantity_in_stock - ? "
+        + "WHERE medicine_id = ? AND quantity_in_stock >= ?";
+
+    String updateSaleTotal =
+        "UPDATE sales SET total_amount = ? WHERE sale_id = ?";
+
+    StringBuilder receipt = new StringBuilder();
+    BigDecimal total = BigDecimal.ZERO;
+    int saleId;
+
+    try (Connection con = DatabaseConnection.getConnection()) {
+        con.setAutoCommit(false);
+
+        try {
+            // Verify the logged-in account exists and is a cashier.
+            try (PreparedStatement ps = con.prepareStatement(
+                    "SELECT role FROM users WHERE user_id = ?")) {
+                ps.setInt(1, cashierUserId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()
+                            || !"Cashier".equals(rs.getString("role"))) {
+                        throw new SQLException(
+                            "The authenticated user is not a valid cashier."
+                        );
+                    }
+                }
+            }
+
+            // Create the sale record.
+            try (PreparedStatement ps = con.prepareStatement(
+                    insertSale, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setBigDecimal(1, BigDecimal.ZERO);
+                ps.setInt(2, cashierUserId);
+                ps.executeUpdate();
+
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        throw new SQLException(
+                            "Could not obtain the new sale ID."
+                        );
+                    }
+                    saleId = keys.getInt(1);
+                }
+            }
+
+            receipt.append("HEALTHFIRSTPIMS\n");
+            receipt.append("SALES RECEIPT\n");
+            receipt.append("----------------------------------------\n");
+            receipt.append("Sale ID: ").append(saleId).append("\n");
+            receipt.append("Cashier ID: ")
+                   .append(cashierUserId).append("\n\n");
+
+            // Lock, validate and process each medicine.
+            try (PreparedStatement lockPs =
+                        con.prepareStatement(lockMedicine);
+                 PreparedStatement itemPs =
+                        con.prepareStatement(insertItem);
+                 PreparedStatement stockPs =
+                        con.prepareStatement(updateStock)) {
+
+                for (CartItem item : cart.values()) {
+                    lockPs.setInt(1, item.id);
+
+                    BigDecimal currentPrice;
+                    String currentName;
+                    int currentStock;
+                    Date expiryDate;
+
+                    try (ResultSet rs = lockPs.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new SQLException(
+                                "Medicine no longer exists: " + item.name
+                            );
+                        }
+
+                        currentName = rs.getString("name");
+                        currentPrice = rs.getBigDecimal("price");
+                        currentStock = rs.getInt("quantity_in_stock");
+                        expiryDate = rs.getDate("expiry_date");
+                    }
+
+                    if (expiryDate == null
+                            || expiryDate.before(
+                                new Date(System.currentTimeMillis())) ) {
+                        throw new SQLException(
+                            "Expired medicine cannot be sold: "
+                                + currentName
+                        );
+                    }
+
+                    if (currentStock < item.quantity) {
+                        throw new SQLException(
+                            "Insufficient stock for " + currentName
+                                + ". Available: " + currentStock
+                        );
+                    }
+
+                    BigDecimal lineTotal = currentPrice.multiply(
+                        BigDecimal.valueOf(item.quantity)
+                    );
+
+                    total = total.add(lineTotal);
+
+                    itemPs.setInt(1, saleId);
+                    itemPs.setInt(2, item.id);
+                    itemPs.setInt(3, item.quantity);
+                    itemPs.setBigDecimal(4, currentPrice);
+                    itemPs.executeUpdate();
+
+                    stockPs.setInt(1, item.quantity);
+                    stockPs.setInt(2, item.id);
+                    stockPs.setInt(3, item.quantity);
+
+                    if (stockPs.executeUpdate() != 1) {
+                        throw new SQLException(
+                            "Stock changed during checkout for "
+                                + currentName
+                        );
+                    }
+
+                    receipt.append(currentName)
+                           .append(" x ")
+                           .append(item.quantity)
+                           .append(" @ R ")
+                           .append(currentPrice.toPlainString())
+                           .append(" = R ")
+                           .append(lineTotal.toPlainString())
+                           .append("\n");
+                }
+            }
+
+            // Save the final sale total.
+            try (PreparedStatement ps =
+                    con.prepareStatement(updateSaleTotal)) {
+                ps.setBigDecimal(1, total);
+                ps.setInt(2, saleId);
+                ps.executeUpdate();
+            }
+
+            // Commit only after every operation succeeds.
+            con.commit();
+
+            receipt.append("----------------------------------------\n");
+            receipt.append("TOTAL: R ")
+                   .append(total.toPlainString())
+                   .append("\n");
+            receipt.append("----------------------------------------\n");
+            receipt.append("Thank you.\n");
+
+            cart.clear();
+            refreshCartTable();
+            loadMedicines();
+
+            JTextArea receiptArea = new JTextArea(receipt.toString());
+            receiptArea.setEditable(false);
+            receiptArea.setFont(
+                new Font(Font.MONOSPACED, Font.PLAIN, 13)
+            );
+
+            JOptionPane.showMessageDialog(
+                this,
+                new JScrollPane(receiptArea),
+                "Sale Completed",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+
+        } catch (Exception ex) {
+            try {
+                con.rollback();
+            } catch (SQLException rollbackEx) {
+                ex.addSuppressed(rollbackEx);
+            }
+
+            showError(
+                "Checkout failed. No sale changes were committed.",
+                ex
+            );
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+    } catch (SQLException ex) {
+        showError("Could not connect to the database.", ex);
+    }
+}
+
+    
     private final Map<Integer, CartItem> cart = new LinkedHashMap<>();
 
     public CashierPOS() {
-        setTitle("HealthFirstPIMS - Point of Sale");
-        setSize(1050, 650);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    this(0);
+}
 
-        createForm();
-        loadMedicines();
-    }
+public CashierPOS(int cashierUserId) {
+    this.cashierUserId = cashierUserId;
+
+    setTitle("HealthFirstPIMS - Point of Sale");
+    setSize(1050, 650);
+    setLocationRelativeTo(null);
+    setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+    createForm();
+    loadMedicines();
+}
+
 
     private void createForm() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
@@ -123,22 +368,27 @@ public class CashierPOS extends JFrame {
         JButton btnRemove = new JButton("Remove Item");
         JButton btnClear = new JButton("Clear Cart");
         JButton btnRefresh = new JButton("Refresh Stock");
+         JButton btnCheckout = new JButton("Checkout / Bill");
         JButton btnClose = new JButton("Close");
-
+       
+        
         btnAdd.addActionListener(e -> addToCart());
         btnRemove.addActionListener(e -> removeFromCart());
         btnClear.addActionListener(e -> clearCart());
         btnRefresh.addActionListener(e -> loadMedicines());
+        btnCheckout.addActionListener(e-> checkout());
         btnClose.addActionListener(e -> dispose());
-
+        
+        
         cartControls.add(new JLabel("Quantity:"));
         cartControls.add(txtQuantity);
         cartControls.add(btnAdd);
         cartControls.add(btnRemove);
         cartControls.add(btnClear);
         cartControls.add(btnRefresh);
+        cartControls.add(btnCheckout);
         cartControls.add(btnClose);
-
+        
         JPanel cartBottom = new JPanel(new BorderLayout(5, 5));
 
         lblTotal = new JLabel("Cart Total: R 0.00");

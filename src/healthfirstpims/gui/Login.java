@@ -111,7 +111,8 @@ public class Login extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-            String username = txtUsername.getText().trim();
+        
+        String username = txtUsername.getText().trim();
 
     String password =
             new String(txtPassword.getPassword());
@@ -136,14 +137,15 @@ public class Login extends javax.swing.JFrame {
 
          PreparedStatement statement =
                  connection.prepareStatement(sql)) {
-
+        
         statement.setString(1, username);
         statement.setString(2, password);
 
         ResultSet result = statement.executeQuery();
-
+        
         if (result.next()) {
-
+            
+            int userId = result.getInt("user_id");
             String role = result.getString("role");
 
             JOptionPane.showMessageDialog(
@@ -161,7 +163,7 @@ public class Login extends javax.swing.JFrame {
             } else if (role.equals("Cashier")) {
 
                 CashierDashboard dashboard =
-                        new CashierDashboard();
+                        new CashierDashboard(userId);
 
                 dashboard.setVisible(true);
             }
