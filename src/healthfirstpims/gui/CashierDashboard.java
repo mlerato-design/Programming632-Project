@@ -48,6 +48,7 @@ public CashierDashboard(int cashierUserId) {
         jButton1.addActionListener(this::jButton1ActionPerformed);
 
         jButton2.setText("Stock Check");
+        jButton2.addActionListener(this::jButton2ActionPerformed);
 
         jButton3.setText("Logout");
         jButton3.addActionListener(this::jButton3ActionPerformed);
@@ -102,6 +103,10 @@ public CashierDashboard(int cashierUserId) {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         new CashierPOS(cashierUserId).setVisible(true);
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        
+    }//GEN-LAST:event_jButton2ActionPerformed
                        
 
     /**
