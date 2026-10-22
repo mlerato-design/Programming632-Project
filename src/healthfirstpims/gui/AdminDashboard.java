@@ -51,6 +51,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         jButton3.addActionListener(this::jButton3ActionPerformed);
 
         jButton4.setText("Reports");
+        jButton4.addActionListener(this::jButton4ActionPerformed);
 
         jButton5.setText("Logout");
         jButton5.addActionListener(this::jButton5ActionPerformed);
@@ -127,6 +128,10 @@ public class AdminDashboard extends javax.swing.JFrame {
     medicineManagement.setVisible(true);
 
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        new InventoryReports().setVisible(true);
+    }//GEN-LAST:event_jButton4ActionPerformed
 
     /**
      * @param args the command line arguments
